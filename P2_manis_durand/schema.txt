@@ -1,0 +1,3 @@
+Décomposons le problème principal
+
+Exporter un tableau CSV répertoriant toutes les informations sur les livres dans "http:/c/books.toscrape.com"
