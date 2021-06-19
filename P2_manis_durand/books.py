@@ -7,9 +7,11 @@ response = requests.get(url)
 if response.ok:
     links = []
     soup = BeautifulSoup(response.text, 'html.parser')
-    lis = soup.find_all('li')
+    lis = soup.find("ul", {"class":"nav nav-list"}).find_all("a")
+    print(len(lis))
     for li in lis:
-        a = li.find('a')
-        link = a['href']
-        links.append(link)
-    print(links)
+        link = li['href']
+        links.append( "http://books.toscrape.com/" + str(link) + "\n")
+
+        print( "http://books.toscrape.com/" + str(link) + "\n")
+
