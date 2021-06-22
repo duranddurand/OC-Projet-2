@@ -54,11 +54,10 @@ def product_urls(url):
 def products_meta(url):
     response = requests.get(url)
     if response.ok:
-        links = []
         soup = BeautifulSoup(response.text, 'html.parser')
         image = soup.find("div", {"id": "product_gallery"})
-        image_link = image.find('img', {"attrs": "src"})
-        return image_link
+        link = "http://books.toscrape.com/" + str(image.find('img')['src']
+        print(link)
 
 
 print(products_meta(url))
