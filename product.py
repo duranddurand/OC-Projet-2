@@ -1,10 +1,11 @@
 import requests
+import re
 from bs4 import BeautifulSoup
 
 #url = 'http://books.toscrape.com/index.html'
 #url = 'http://books.toscrape.com/catalogue/category/books/historical-fiction_4/index.html'
 #
-url = 'http://books.toscrape.com/catalogue/the-last-painting-of-sara-de-vos_259/index.html'
+url = 'http://books.toscrape.com/catalogue/the-requiem-red_995/index.html'
 
 
 def category_urls(url):
@@ -59,13 +60,12 @@ def products_meta(url):
     response = requests.get(url)
     if response.ok:
         soup = BeautifulSoup(response.text, 'html.parser')
-        image = soup.find("div", {"class": "carousel"}).find("img")
-        image_link = "http://books.toscrape.com/" + image["src"][6:]
-        title = soup.find("div", {"class": "product_main"}).find("h1").text
-        price = soup.find("div", {"class": "product_main"}).find("p", {"class": "price_color"}).text[1:]
-        availability = soup.find("div", {"class": "product_main"}).find("p", {"class": "instock"}).text[25]
+        image_src = "http://books.toscrape.com/" + (soup.find("div", class_="carousel").find("img"))["src"][6:]
+        title = soup.find("div", class_="product_main").find("h1").text
+        price = soup.find("div", class_="product_main").find("p", class_="price_color").text[1:]
+        instock = re.sub("\D", "", (soup.find("div", class_="product_main").find("p", class_="instock").text))
 
-        return availability
+        return instock
 print(products_meta(url))
 
 """
