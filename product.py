@@ -3,7 +3,9 @@ from bs4 import BeautifulSoup
 
 #url = 'http://books.toscrape.com/index.html'
 #url = 'http://books.toscrape.com/catalogue/category/books/historical-fiction_4/index.html'
+#
 url = 'http://books.toscrape.com/catalogue/the-last-painting-of-sara-de-vos_259/index.html'
+
 
 def category_urls(url):
 
@@ -28,9 +30,10 @@ def nbr_pages(url):
         return (x // 20) + (x % 20 != 0)
 
 
+#input: Category url from sidebar
+#output: returns a list of all pages
 def category_pages_urls(url):
-    pages = []
-    pages.append(url)
+    pages = [url]
     if nbr_pages(url) > 1:
         for i in range(1, nbr_pages(url)):
             pages.append(url.replace("index", "page-" + str(i+1)))
@@ -43,32 +46,31 @@ def product_urls(url):
     if response.ok:
         products = []
         soup = BeautifulSoup(response.text, 'html.parser')
-        articles = soup.find_all("article", {"class": "product_pod"})
+        articles = soup.find_all("article", class_="product_pod")
         for article in articles:
             ref = article.find("a")
             link = ref["href"]
-            products.append("http://books.toscrape.com/catalogue" + str(link[8:]) + "\n")
+            products.append("http://books.toscrape.com/catalogue" + link[8:] + "\n")
         return products
 
 
 def products_meta(url):
+
     response = requests.get(url)
     if response.ok:
         soup = BeautifulSoup(response.text, 'html.parser')
-        image = soup.find("div", {"id": "product_gallery"})
-        link = "http://books.toscrape.com/" + str(image.find('img')['src']
-        print(link)
+        image = soup.find("div", {"class": "carousel"}).find("img")
+        image_link = "http://books.toscrape.com/" + image["src"][6:]
+        title = soup.find("div", {"class": "product_main"}).find("h1").text
+        price = soup.find("div", {"class": "product_main"}).find("p", {"class": "price_color"}).text[1:]
+        availability = soup.find("div", {"class": "product_main"}).find("p", {"class": "instock"}).text[25]
 
-
+        return availability
 print(products_meta(url))
 
-
-
-
-
-
-"""def all_urls(url):
-    all = []
+"""
+all_urls(url):
+all = []
 
     for i in category_urls(url):
         x = 0
@@ -77,4 +79,5 @@ print(products_meta(url))
         x += 1
     print(all)
 
-all_urls(url)"""
+all_urls(url)
+"""
