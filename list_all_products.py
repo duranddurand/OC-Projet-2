@@ -1,12 +1,12 @@
 import requests
 import re
+import csv
 from bs4 import BeautifulSoup
 
 #url = 'http://books.toscrape.com/index.html'
 #url = 'http://books.toscrape.com/catalogue/category/books/historical-fiction_4/index.html'
 #
-url = 'http://books.toscrape.com/catalogue/the-requiem-red_995/index.html'
-
+url = 'http://books.toscrape.com/catalogue/a-light-in-the-attic_1000/index.html'
 
 def category_urls(url):
 
@@ -45,6 +45,7 @@ def product_urls(url):
 
     response = requests.get(url)
     if response.ok:
+
         products = []
         soup = BeautifulSoup(response.text, 'html.parser')
         articles = soup.find_all("article", class_="product_pod")
@@ -58,26 +59,29 @@ def product_urls(url):
 def products_meta(url):
 
     response = requests.get(url)
-    if response.ok:
-        soup = BeautifulSoup(response.text, 'html.parser')
-        image_src = "http://books.toscrape.com/" + (soup.find("div", class_="carousel").find("img"))["src"][6:]
-        title = soup.find("div", class_="product_main").find("h1").text
-        price = soup.find("div", class_="product_main").find("p", class_="price_color").text[1:]
-        instock = re.sub("\D", "", (soup.find("div", class_="product_main").find("p", class_="instock").text))
+    soup = BeautifulSoup(response.text, 'html.parser')
 
-        return instock
-print(products_meta(url))
+    UPC = soup.find("th", text="UPC").find_next_sibling("td").text
+    title = soup.find("div", class_="product_main").find("h1").text
+    price = soup.find("div", class_="product_main").find("p", class_="price_color").text[1:]
+    instock = re.sub("\D", "", (soup.find("div", class_="product_main").find("p", class_="instock").text))
+    description = soup.find(id="product_description").find_next_sibling("p").text
+    category = soup.find("ul", class_="breadcrumb").find_all("li")[2].text.strip()
+    rating = str({"One":1, "Two":2, "Three":3, "Four":4, "Five":5}.get(soup.find("p", class_="star-rating")["class"][1])) + "/5"
+    img_src = "http://books.toscrape.com/" + (soup.find("div", class_="carousel").find("img"))["src"][6:]
 
-"""
-all_urls(url):
-all = []
+    return {"product_page_url":url,"universal_ product_code":UPC,"title":title,"price_including_tax":price,"price_excluding_tax":price,"number_available":instock, "product_description":description,"category":category, "review_rating":rating,"image_url":img_src}
 
-    for i in category_urls(url):
-        x = 0
-        while x <= nbr_pages(i):
-            all.append(category_pages_urls(i)[x])
-        x += 1
-    print(all)
+row = [products_meta(url)]
 
-all_urls(url)
-"""
+def create_csv(url):
+
+    #filename = row[0]["category"] + ".csv"
+
+    with open(row[0]["category"] + ".csv", 'w', ) as f:
+        writer = csv.DictWriter(f, row[0].keys())
+        writer.writeheader()
+        for d in row:
+            writer.writerow(d)
+
+create_csv(url)
