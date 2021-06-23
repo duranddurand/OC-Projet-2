@@ -65,7 +65,8 @@ def products_meta(url):
         price = soup.find("div", class_="product_main").find("p", class_="price_color").text[1:]
         instock = re.sub("\D", "", (soup.find("div", class_="product_main").find("p", class_="instock").text))
 
-        return instock
+        return (title, image_src, price, price, instock)
+
 print(products_meta(url))
 
 """
