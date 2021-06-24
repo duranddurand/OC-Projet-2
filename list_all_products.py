@@ -59,6 +59,7 @@ def product_urls(url):
 def products_meta(url):
 
     response = requests.get(url)
+<<<<<<< HEAD:list_all_products.py
     soup = BeautifulSoup(response.text, 'html.parser')
 
     UPC = soup.find("th", text="UPC").find_next_sibling("td").text
@@ -85,3 +86,29 @@ def create_csv(url):
             writer.writerow(d)
 
 create_csv(url)
+=======
+    if response.ok:
+        soup = BeautifulSoup(response.text, 'html.parser')
+        image_src = "http://books.toscrape.com/" + (soup.find("div", class_="carousel").find("img"))["src"][6:]
+        title = soup.find("div", class_="product_main").find("h1").text
+        price = soup.find("div", class_="product_main").find("p", class_="price_color").text[1:]
+        instock = re.sub("\D", "", (soup.find("div", class_="product_main").find("p", class_="instock").text))
+
+        return (title, image_src, price, price, instock)
+
+print(products_meta(url))
+
+"""
+all_urls(url):
+all = []
+
+    for i in category_urls(url):
+        x = 0
+        while x <= nbr_pages(i):
+            all.append(category_pages_urls(i)[x])
+        x += 1
+    print(all)
+
+all_urls(url)
+"""
+>>>>>>> origin/main:product.py
