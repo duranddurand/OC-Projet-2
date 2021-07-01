@@ -109,5 +109,5 @@ def create_csv(url):
             writer.writerow(product_meta(book))
 
 
-for category in category_urls('http://books.toscrape.com/index.html')[14:]:
+for category in category_urls('http://books.toscrape.com/index.html')[0:1]:
     create_csv(category)
