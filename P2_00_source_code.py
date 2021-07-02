@@ -1,15 +1,18 @@
 import requests
+import urllib.request
 import re
 import csv
 from bs4 import BeautifulSoup
 
-# input : website url[]
-# output : url for each category[]
+path = "/Users/duranmanis/Desktop/Python/P2_manis_durand/"
 
 
 def category_urls(url):
+    # input : website url[]
+    # output : url for each category[]
 
     response = requests.get(url)
+
     if response.ok:
         categories = []
         soup = BeautifulSoup(response.text, 'html.parser')
@@ -19,12 +22,12 @@ def category_urls(url):
         return categories
 
 
-# input : category url
-# output : nbr of pages per category
-
-
 def nbr_pages(url):
+    # input : category url
+    # output : nbr of pages per category
+
     response = requests.get(url)
+
     if response.ok:
         soup = BeautifulSoup(response.text, 'html.parser')
         strong = soup.find_all("strong")
@@ -32,25 +35,24 @@ def nbr_pages(url):
         return (x // 20) + (x % 20 != 0)
 
 
-# input: category url
-# output: category pages url
-
-
 def category_pages(url):
+    # input: category url
+    # output: category pages url
+
     pages = [url]
+
     if nbr_pages(url) > 1:
         for i in range(1, nbr_pages(url)):
             pages.append(url.replace("index", "page-" + str(i+1)))
     return pages
 
 
-# input : category page url
-# output : product urls
-
-
 def product_urls(url):
+    # input : category page url
+    # output : product urls
 
     response = requests.get(url)
+
     if response.ok:
 
         products = []
@@ -63,11 +65,9 @@ def product_urls(url):
         return products
 
 
-# input = product url
-# output = dict of product's meta
-
-
 def product_meta(url):
+    # input = product url
+    # output = dict of product's meta
 
     response = requests.get(url)
     soup = BeautifulSoup(response.text, 'html.parser')
@@ -76,22 +76,25 @@ def product_meta(url):
     title = soup.find("div", class_="product_main").find("h1").text
     price = soup.find("div", class_="product_main").find("p", class_="price_color").text[1:]
     stock = re.sub("\\D", "", soup.find("div", class_="product_main").find("p", class_="instock").text)
-    description = soup.find("div", id="product_description").find_next_sibling("p").text
+    description = soup.find("article", class_="product_page").find("div", class_="sub-header").find_next_sibling().text
     category_ = soup.find("ul", class_="breadcrumb").find_all("li")[2].text.strip()
     rating = (str({"One": 1, "Two": 2, "Three": 3, "Four": 4, "Five": 5}
                   .get(soup.find("p", class_="star-rating")["class"][1])) + "/5")
     img_src = "http://books.toscrape.com/" + (soup.find("div", class_="carousel").find("img"))["src"][6:]
+    img_name = img_src.split("/")[-1]
+    image = urllib.request.urlopen(img_src)
+
+    with open(path + "images/" + img_name, "wb") as f:
+        f.write(image.read())
 
     return {"product_page_url": url, "universal_product_code": upc, "title": title, "price_including_tax": price,
             "price_excluding_tax": price, "number_available": stock, "product_description": description,
             "category": category_, "review_rating": rating, "image_url": img_src}
-# print(product_meta('http://books.toscrape.com/catalogue/sophies-world_966/index.html'))
-# input = category url
-# output = csv of all products meta
 
 
 def create_csv(url):
-
+    # input = category url
+    # output = csv of all products meta
     books = []
 
     for page in category_pages(url):
@@ -99,8 +102,7 @@ def create_csv(url):
             books.append(url)
 
     meta = product_meta(books[0])
-
-    filepath = "/Users/duranmanis/Desktop/Python/P2_manis_durand/csv/" + meta["category"] + ".csv"
+    filepath = path + "csv/" + meta["category"] + ".csv"
     
     with open(filepath, 'w') as f:
         writer = csv.DictWriter(f, fieldnames=meta.keys())
@@ -109,5 +111,5 @@ def create_csv(url):
             writer.writerow(product_meta(book))
 
 
-for category in category_urls('http://books.toscrape.com/index.html')[0:1]:
+for category in category_urls('http://books.toscrape.com/index.html'):
     create_csv(category)
