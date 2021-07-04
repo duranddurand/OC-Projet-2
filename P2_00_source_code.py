@@ -1,4 +1,5 @@
 import requests
+import concurrent.futures
 import urllib.request
 import re
 import csv
@@ -64,6 +65,7 @@ def product_urls(url):
             products.append("http://books.toscrape.com/catalogue" + link[8:])
         return products
 
+images = []
 
 def product_meta(url):
     # input = product url
@@ -74,21 +76,19 @@ def product_meta(url):
 
     upc = soup.find("th", text="UPC").find_next_sibling("td").text
     title = soup.find("div", class_="product_main").find("h1").text
-    price = soup.find("div", class_="product_main").find("p", class_="price_color").text[1:]
+    price_incl = soup.find("th", text="Price (incl. tax)").find_next_sibling().text
+    price_excl = soup.find("th", text="Price (excl. tax)").find_next_sibling().text
+
     stock = re.sub("\\D", "", soup.find("div", class_="product_main").find("p", class_="instock").text)
     description = soup.find("article", class_="product_page").find("div", class_="sub-header").find_next_sibling().text
     category_ = soup.find("ul", class_="breadcrumb").find_all("li")[2].text.strip()
     rating = (str({"One": 1, "Two": 2, "Three": 3, "Four": 4, "Five": 5}
                   .get(soup.find("p", class_="star-rating")["class"][1])) + "/5")
     img_src = "http://books.toscrape.com/" + (soup.find("div", class_="carousel").find("img"))["src"][6:]
-    img_name = img_src.split("/")[-1]
-    image = urllib.request.urlopen(img_src)
+    images.append(img_src)
 
-    with open(path + "images/" + img_name, "wb") as f:
-        f.write(image.read())
-
-    return {"product_page_url": url, "universal_product_code": upc, "title": title, "price_including_tax": price,
-            "price_excluding_tax": price, "number_available": stock, "product_description": description,
+    return {"product_page_url": url, "universal_product_code": upc, "title": title, "price_including_tax": price_incl,
+            "price_excluding_tax": price_excl, "number_available": stock, "product_description": description,
             "category": category_, "review_rating": rating, "image_url": img_src}
 
 
@@ -111,5 +111,18 @@ def create_csv(url):
             writer.writerow(product_meta(book))
 
 
-for category in category_urls('http://books.toscrape.com/index.html'):
-    create_csv(category)
+def create_jpg(image):
+
+    jpeg = urllib.request.urlopen(image)
+    with open(path + "images/" + image.split("/")[-1], "wb") as f:
+        f.write(jpeg.read())
+
+
+def main():
+    with concurrent.futures.ThreadPoolExecutor() as executor:
+        tables = executor.map(create_csv, category_urls('http://books.toscrape.com/index.html'))
+    with concurrent.futures.ThreadPoolExecutor() as executor:
+        frames = executor.map(create_jpg, images)
+
+main()
+
